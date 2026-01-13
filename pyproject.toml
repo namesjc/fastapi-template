@@ -1,0 +1,58 @@
+[project]
+name = "fastapi-production"
+version = "0.1.0"
+description = "Production-ready FastAPI application"
+authors = [{name = "Your Name", email = "you@example.com"}]
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi==0.109.0",
+    "uvicorn[standard]==0.27.0",
+    "pydantic==2.5.3",
+    "pydantic-settings==2.1.0",
+    "sqlalchemy==2.0.25",
+    "alembic==1.13.1",
+    "asyncpg==0.29.0",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "python-multipart==0.0.6",
+    "redis==5.0.1",
+    "httpx==0.26.0",
+    "tenacity==8.2.3",
+    "prometheus-client==0.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.4",
+    "pytest-asyncio==0.23.3",
+    "pytest-cov==4.1.0",
+    "black==24.1.1",
+    "ruff==0.1.14",
+    "mypy==1.8.0",
+    "pre-commit==3.6.0",
+    "httpx==0.26.0",
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py312']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "I", "N", "W", "B", "C4", "UP"]
+ignore = ["E501", "B008", "C901"]
+target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--cov=app --cov-report=html --cov-report=term-missing"
