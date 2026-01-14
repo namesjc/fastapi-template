@@ -1,5 +1,7 @@
 """Authentication endpoints."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,26 +13,33 @@ from app.services.user_service import user_service
 
 router = APIRouter()
 
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
+OAuth2FormDep = Annotated[OAuth2PasswordRequestForm, Depends()]
 
-@router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
     user_in: UserCreate,
-    db: AsyncSession = Depends(get_db),
+    db: SessionDep,
 ) -> User:
     """Register a new user."""
     try:
         user = await user_service.create_user(db, user_in)
         await db.commit()
-        return user
     except ValueError as e:
         await db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
+    else:
+        return user
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db),
+    db: SessionDep,
+    form_data: OAuth2FormDep,
 ) -> Token:
     """Login and get access token."""
     user = await user_service.authenticate(db, form_data.username, form_data.password)

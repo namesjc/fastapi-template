@@ -1,7 +1,9 @@
 """API dependencies."""
 
+from typing import Annotated
+
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,10 +14,13 @@ from app.models import User
 # Security scheme
 security = HTTPBearer()
 
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
+BasicDep = Annotated[str, Depends(security)]
+
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db),
+    credentials: BasicDep,
+    db: SessionDep,
 ) -> User:
     """
     Get current authenticated user.
@@ -29,6 +34,7 @@ async def get_current_user(
 
     Raises:
         HTTPException: If authentication fails
+
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -49,13 +55,19 @@ async def get_current_user(
         raise credentials_exception
 
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user",
+        )
 
     return user
 
 
+CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
 async def get_current_active_user(
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUserDep,
 ) -> User:
     """
     Get current active user.
@@ -65,12 +77,13 @@ async def get_current_active_user(
 
     Returns:
         Current active user
+
     """
     return current_user
 
 
 async def get_current_superuser(
-    current_user: User = Depends(get_current_user),
+    current_user: CurrentUserDep,
 ) -> User:
     """
     Get current superuser.
@@ -83,7 +96,11 @@ async def get_current_superuser(
 
     Raises:
         HTTPException: If user is not a superuser
+
     """
     if not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough privileges")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough privileges",
+        )
     return current_user

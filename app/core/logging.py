@@ -50,7 +50,9 @@ def setup_logging() -> None:
     if settings.LOG_FORMAT == "json":
         formatter = JSONFormatter()
     else:
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        )
 
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
@@ -69,5 +71,6 @@ def get_logger(name: str) -> logging.Logger:
 
     Returns:
         Logger instance
+
     """
     return logging.getLogger(name)

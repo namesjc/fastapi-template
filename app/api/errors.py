@@ -10,7 +10,10 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
     """
     Handle validation errors.
 
@@ -20,6 +23,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
     Returns:
         JSON error response
+
     """
     logger.warning(
         "Validation error",
@@ -38,7 +42,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSONResponse:
+async def integrity_error_handler(
+    request: Request,
+    exc: IntegrityError,
+) -> JSONResponse:
     """
     Handle database integrity errors.
 
@@ -48,6 +55,7 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
 
     Returns:
         JSON error response
+
     """
     logger.error(
         "Database integrity error",
@@ -65,7 +73,10 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
     )
 
 
-async def database_exception_handler(request: Request, exc: SQLAlchemyError) -> JSONResponse:
+async def database_exception_handler(
+    request: Request,
+    exc: SQLAlchemyError,
+) -> JSONResponse:
     """
     Handle general database errors.
 
@@ -75,6 +86,7 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError) -> 
 
     Returns:
         JSON error response
+
     """
     logger.error(
         "Database error",
@@ -102,6 +114,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
 
     Returns:
         JSON error response
+
     """
     logger.error(
         "Unhandled exception",
@@ -110,7 +123,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
             "error": str(exc),
             "type": type(exc).__name__,
         },
-        exc_info=True,
+        exc_info=exc,
     )
 
     return JSONResponse(

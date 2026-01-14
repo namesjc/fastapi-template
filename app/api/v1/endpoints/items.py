@@ -1,5 +1,7 @@
 """Item endpoints."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,12 +13,14 @@ from app.services.item_service import item_service
 
 router = APIRouter()
 
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
 
-@router.post("", response_model=Item, status_code=status.HTTP_201_CREATED)
+
+@router.post("", status_code=status.HTTP_201_CREATED)
 async def create_item(
     item_in: ItemCreate,
-    current_user: UserModel = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: Annotated[UserModel, Depends(get_current_active_user)],
+    db: SessionDep,
 ) -> Item:
     """Create a new item."""
     item = await item_service.create_item(db, item_in, current_user.id)
@@ -24,22 +28,27 @@ async def create_item(
     return item
 
 
-@router.get("", response_model=list[Item])
+@router.get("")
 async def read_items(
+    current_user: Annotated[UserModel, Depends(get_current_active_user)],
+    db: SessionDep,
     skip: int = 0,
     limit: int = 100,
-    current_user: UserModel = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
 ) -> list[Item]:
     """Get all items for current user."""
-    return await item_service.get_user_items(db, current_user.id, skip=skip, limit=limit)
+    return await item_service.get_user_items(
+        db,
+        current_user.id,
+        skip=skip,
+        limit=limit,
+    )
 
 
-@router.get("/{item_id}", response_model=Item)
+@router.get("/{item_id}")
 async def read_item(
     item_id: int,
-    current_user: UserModel = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: Annotated[UserModel, Depends(get_current_active_user)],
+    db: SessionDep,
 ) -> Item:
     """Get item by ID."""
     item = await item_service.get_item(db, item_id)
@@ -58,12 +67,12 @@ async def read_item(
     return item
 
 
-@router.put("/{item_id}", response_model=Item)
+@router.put("/{item_id}")
 async def update_item(
     item_id: int,
     item_update: ItemUpdate,
-    current_user: UserModel = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: Annotated[UserModel, Depends(get_current_active_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> Item:
     """Update item."""
     item = await item_service.get_item(db, item_id)
@@ -84,11 +93,11 @@ async def update_item(
     return updated_item
 
 
-@router.delete("/{item_id}", response_model=MessageResponse)
+@router.delete("/{item_id}")
 async def delete_item(
     item_id: int,
-    current_user: UserModel = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: Annotated[UserModel, Depends(get_current_active_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> MessageResponse:
     """Delete item."""
     item = await item_service.get_item(db, item_id)

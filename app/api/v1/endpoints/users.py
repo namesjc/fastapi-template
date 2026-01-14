@@ -1,5 +1,7 @@
 """User endpoints."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,20 +13,24 @@ from app.services.user_service import user_service
 
 router = APIRouter()
 
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
+SuperUserDep = Annotated[UserModel, Depends(get_current_superuser)]
+ActiveUserDep = Annotated[UserModel, Depends(get_current_active_user)]
 
-@router.get("/me", response_model=User)
+
+@router.get("/me")
 async def read_current_user(
-    current_user: User = Depends(get_current_active_user),
+    current_user: ActiveUserDep,
 ) -> User:
     """Get current user."""
     return current_user
 
 
-@router.put("/me", response_model=User)
+@router.put("/me")
 async def update_current_user(
     user_update: UserUpdate,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
+    current_user: ActiveUserDep,
+    db: SessionDep,
 ) -> User:
     """Update current user."""
     user = await user_service.update_user(db, current_user.id, user_update)
@@ -37,23 +43,23 @@ async def update_current_user(
     return user
 
 
-@router.get("", response_model=list[User])
+@router.get("")
 async def read_users(
+    _: SuperUserDep,
+    db: SessionDep,
     skip: int = 0,
     limit: int = 100,
-    current_user: UserModel = Depends(get_current_superuser),
-    db: AsyncSession = Depends(get_db),
 ) -> list[User]:
     """Get all users (admin only)."""
     users = await user_service.repository.get_multi(db, skip=skip, limit=limit)
     return [User.model_validate(user) for user in users]
 
 
-@router.get("/{user_id}", response_model=User)
+@router.get("/{user_id}")
 async def read_user(
     user_id: int,
-    current_user: UserModel = Depends(get_current_superuser),
-    db: AsyncSession = Depends(get_db),
+    _: SuperUserDep,
+    db: SessionDep,
 ) -> User:
     """Get user by ID (admin only)."""
     user = await user_service.get_user(db, user_id)
@@ -65,11 +71,11 @@ async def read_user(
     return user
 
 
-@router.delete("/{user_id}", response_model=MessageResponse)
+@router.delete("/{user_id}")
 async def delete_user(
     user_id: int,
-    current_user: UserModel = Depends(get_current_superuser),
-    db: AsyncSession = Depends(get_db),
+    current_user: SuperUserDep,
+    db: SessionDep,
 ) -> MessageResponse:
     """Delete user (admin only)."""
     if user_id == current_user.id:

@@ -10,12 +10,17 @@ from app.schemas import HealthCheck
 router = APIRouter()
 
 
-@router.get("", response_model=HealthCheck)
+@router.get("/")
 async def health_check() -> HealthCheck:
     """
     Health check endpoint.
 
     Returns:
         HealthCheck: Health status
+
     """
-    return HealthCheck(status="healthy", version=__version__, timestamp=datetime.utcnow())
+    return HealthCheck(
+        status="healthy",
+        version=__version__,
+        timestamp=datetime.now(tz=datetime.UTC),
+    )
