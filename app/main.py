@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
 
     Args:
         app: FastAPI application
+
     """
     # Startup
     setup_logging()
@@ -46,8 +47,6 @@ app = FastAPI(
     title=settings.APP_NAME,
     description="Production-ready FastAPI application with best practices",
     version="0.1.0",
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None,
     lifespan=lifespan,
 )
 
